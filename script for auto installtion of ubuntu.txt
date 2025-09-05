@@ -6,68 +6,64 @@ sudo apt update
 #install the vim editor
 sudo apt-get install vim -y
 
-#Append the changes to the file 
-sed -i 's/domain name=local/domain name=.alocal' /etc/avahi/avahi-daemon.conf 
+#Append the changes to the file
+sed -i 's/#domain-name=local/domain-name=.alocal/g' /etc/avahi/avahi-daemon.conf
 
 #Restart the service
 sudo systemctl restart avahi-daemon.service
 
-#Need to remove the domain from AD first and then we can connect the domain  
+#Need to remove the domain from AD first and then we can connect the domain
+
+sudo sed -i "2c 127.0.0.1 $(hostname).bmwtechworks.local $(hostname)" /etc/hosts
 
 sudo sed -i '2a\
 10.110.0.15 BTIPUNAD01.bmwtechworks.local bmwtechworks.local\
 10.110.41.11 BTICHNAD01.bmwtechworks.local bmwtechworks.local' /etc/hosts
 
-sudo sed -i '2c
-127.0.0.1 $HOSTNAME.bmwtechworks.local $HOSTNAME' /etc/hosts
-
 sudo apt update
 
-sudo apt install realmd sssd sssd-tools libnss-sss libpam-sss \
-krb5-user adcli samba-common-bin oddjob oddjob-mkhomedir packagekit -y 
+sudo apt install realmd sssd sssd-tools libnss-sss libpam-sss krb5-user adcli samba-common-bin oddjob oddjob-mkhomedir packagekit -y
 
 #a. BMWTECHWORKS.LOCAL 
 #b. BTIPUNAD01
 #c. BTIPUNAD01
 
-&&
 sudo pam-auth-update --enable pam_winbind
- 
+
 sudo pam-auth-update --enable mkhomedir
- 
+
 sudo systemctl restart sssd
 
 realm discover bmwtechworks.local
- 
+
 sudo realm join -v --user=administrator bmwtechworks.local
 #----
 #admin@123 
-#---- 
- 
-&&
+#----
+
 sudo apt install chrony
-sudo systemctl enable chronyd
+sudo systemctl enable chrony
 sudo systemctl start chronyd
 sudo systemctl restart chrony
- 
-echo "ad_gpo_access_control = permissive" >> /etc/sssd/sssd.conf
+
+sudo sed -i "18i ad_gpo_access_control = permissive" /etc/sssd/sssd.conf
 
 lspci | grep -i nvidia
- 
+
 lsmod | grep nvidia
 
 sudo apt remove --purge nvidia-*
- 
+
 sudo apt update && sudo apt upgrade -y
- 
-sudo add-apt-repository restricted  
-sudo add-apt-repository multiverse  
+
+sudo add-apt-repository restricted
+sudo add-apt-repository multiverse
 sudo apt update
- 
+
 uname -r
- 
+
 sudo apt install build-essential linux-headers-$(uname -r)
- 
+
 software-properties-gtk
 
 echo "--- End of the script ---"
