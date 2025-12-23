@@ -1,0 +1,85 @@
+#!/bin/bash
+
+echo "--- Starting of the script ---"
+sudo apt update
+
+sudo apt install xrdp -y
+sudo systemctl start xrdp
+sudo systemctl enable xrdp
+
+#install the vim editor
+sudo apt-get install vim -y
+
+#echo "--- Append the changes to the file ---"
+sudo sed -i 's/#domain-name=local/domain-name=.alocal/g' /etc/avahi/avahi-daemon.conf
+
+#echo "--- Restart the avahi service ---"
+sudo systemctl restart avahi-daemon.service
+
+#Need to remove the domain from AD first and then we can connect the domain
+
+#echo "--- Add entry to the local hosts file ---"
+sudo sed -i "2c 127.0.0.1 $(hostname).bmwtechworks.local $(hostname)" /etc/hosts
+
+sudo sed -i '2a\
+10.110.0.15 BTIPUNAD01.bmwtechworks.local bmwtechworks.local\
+10.110.41.11 BTICHNAD01.bmwtechworks.local bmwtechworks.local\
+10.110.17.15 BTIBLRADSRV01.Bmwtechworks.local bmwtechworks.local' /etc/hosts
+
+#echo "--- update the package ---"
+sudo apt update
+
+sudo apt install realmd sssd sssd-tools libnss-sss libpam-sss krb5-user adcli samba-common-bin oddjob oddjob-mkhomedir packagekit -y
+
+#a. BMWTECHWORKS.LOCAL 
+#b. BTIPUNAD01
+#c. BTIPUNAD01
+
+sudo pam-auth-update --enable pam_winbind
+
+sudo pam-auth-update --enable mkhomedir
+
+#echo "--- Restart the sssd service ---"
+sudo systemctl restart sssd
+
+#echo "--- Join the Domain to the System ---"
+realm discover bmwtechworks.local
+
+sudo realm join -v --user=administrator bmwtechworks.local
+#----
+#admin@123 
+#----
+
+#echo "--- Install the Chrony service and enable it ---"
+sudo apt install chrony -y
+sudo systemctl enable chrony
+sudo systemctl start chronyd
+sudo systemctl restart chrony
+
+#echo "--- Append the permissive access in sssd.conf file ---"
+sudo sed -i "18i ad_gpo_access_control = permissive" /etc/sssd/sssd.conf
+
+#echo "--- Check for the nvidia drivers ---"
+sudo lspci | grep -i nvidia
+
+sudo lsmod | grep nvidia
+
+#echo "--- Remove the nvidia drivers ---"
+sudo apt remove --purge nvidia-*
+
+#echo "--- Update and upgrade the packages ---"
+sudo apt update && sudo apt upgrade -y
+
+#echo "--- Add the Restrictions to apt-repository ---"
+sudo add-apt-repository restricted
+sudo add-apt-repository multiverse
+sudo apt update
+
+#echo "--- check the Kernel version ---"
+uname -r
+
+sudo apt install build-essential linux-headers-$(uname -r)
+
+software-properties-gtk
+
+echo "--- End of the script ---"-
